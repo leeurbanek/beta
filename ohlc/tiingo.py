@@ -9,9 +9,9 @@ from data import config_dict, ohlc
 
 DEBUG = True
 ctx = config_dict
-username = "kernelbeau"
-password = "kerne1be@]tiingo"
-token = "75a0aa12dd1e297d613cfe92ecfe96dab95a4589"
+username = ""
+password = ""
+token = ""
 
 logging.config.fileConfig(fname="../logger.ini")
 logging.getLogger("requests").setLevel(logging.WARNING)
