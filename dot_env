@@ -1,0 +1,23 @@
+# python-dotenv https://pypi.org/project/python-dotenv/
+# Sample '.env' file, edit this to suit your system.
+# Before running change the name of this file to '.env'.
+
+
+# Symbolic link to Adblockultimate
+AD_BLOCK='/location/of/Adblockultimate'
+
+# https://www.alphavantage.co
+API_TOKEN_ALPHA=1234
+
+# https://api.tiingo.com
+API_TOKEN_TIINGO=1234
+
+# For Windows users:
+# location of the browser driver for Selenium
+DRIVER_PATH=r'\path\to\geckodriver'  # Firefox
+
+
+# Note: To find location of Adblockultimate in Firefox 120.0.0 for example:
+#  Go to the url about:support.
+#  In Application Basics table, next to Profile Directory, click button 'Open Directory'.
+#  Open extensions folder. The file you want ends with 'adblockultimate.net.xpi'.
