@@ -4,9 +4,9 @@ import logging, logging.config
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
 
 from dotenv import load_dotenv
+
 
 DEBUG = True
 
@@ -60,6 +60,7 @@ class BaseProcessor:
 
 class YahooFinanceDataProcessor(BaseProcessor):
     """Fetch ohlc price data using yfinance"""
+    import yfinance as yf
 
     def __init__(self, ctx: dict):
         super().__init__(ctx=ctx)
@@ -107,6 +108,9 @@ class YahooFinanceDataProcessor(BaseProcessor):
         df = pd.DataFrame(index=yf_df.index.values.astype(int) // 10**9)
         df.index.name = "date"
 
+        # insert ticker symbol column
+        df.insert(loc=0, column="ticker", value=ticker, allow_duplicates=True)
+
         # difference between the close and open price
         clop = list(round((yf_df["Close"] - yf_df["Open"]) * 100).astype(int))
         if DEBUG: logger.debug(f"clop: {clop} {type(clop)}")
@@ -143,68 +147,6 @@ class YahooFinanceDataProcessor(BaseProcessor):
 
         # insert values for each data line into df
         for i, item in enumerate(self.data_line):
-            df.insert(loc=i, column=f"{item.lower()}", value=eval(item.lower()), allow_duplicates=True)
+            df.insert(loc=i+1, column=f"{item.lower()}", value=eval(item.lower()), allow_duplicates=True)
 
         return ticker, df
-
-
-def create_sqlite_indicator_database(ctx: dict) -> None:
-    """Create sqlite3 database. Table for each ticker symbol, column for each data line."""
-    if DEBUG:
-        logger.debug(f"create_sqlite_indicator_database(ctx={type(ctx)})")
-
-
-def main(ctx: dict) -> None:
-    if DEBUG:
-        logger.debug(f"main(ctx={ctx})")
-
-    # create database
-    create_sqlite_indicator_database(ctx=ctx)
-
-    # select data processor
-    processor = YahooFinanceDataProcessor(ctx=ctx)
-
-    # get and save data for each ticker
-    # for index, ticker in enumerate(ctx['interface']['arguments']):
-    #     if not DEBUG:
-    #         print(f"  - fetching {ticker}\t", end="")
-
-    #     ctx['interface']['index'] = index  # alphavantage may throttle at five downloads
-    #     data_tuple = processor.download_and_parse_price_data(ticker=ticker)
-    #     utils.write_indicator_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
-
-
-if __name__ == "__main__":
-    if DEBUG:
-        logger.debug(f"******* START - yfinance.py.main() *******")
-
-    ctx = {
-        'default': {
-            'debug': True,
-            'work_dir': '/home/la/dev/stomartat/temp/',
-            'cfg_chart': '/home/la/dev/stomartat/src/pkg/chart_srv/cfg_chart.ini',
-            'cfg_data': '/home/la/dev/stomartat/src/pkg/data_srv/cfg_data.ini',
-            'cfg_main': '/home/la/dev/stomartat/src/config.ini'
-        },
-        'interface': {
-            'command': 'data',
-            'target_data': ['LQD'],
-            'arguments': ['EEM', 'IWM'],
-            'database': 'default.db',
-            'data_line': ['CLOP', 'CLV', 'CWAP', 'HILO', 'MASS', 'VOLUME']
-        },
-        'data_service': {
-            'data_frequency': 'daily',
-            'data_line': 'CLOP CLV CWAP HILO MASS VOLUME',
-            'data_list': 'EEM IWM',
-            'data_lookback': '42',
-            'data_provider': 'yfinance',
-            'sklearn_scaler': 'MinMaxScaler',
-            'target_data': 'LQD',
-            'url_alphavantage': 'https://www.alphavantage.co/query',
-            'url_tiingo': '',
-            'url_yfinance': ''
-        }
-    }
-
-    main(ctx=ctx)

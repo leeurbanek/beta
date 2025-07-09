@@ -12,21 +12,23 @@ logging.config.fileConfig(fname="../logger.ini")
 logger = logging.getLogger(__name__)
 
 ctx = {
-    "database": "/home/la/dev/stomartat/temp/data/xdefault.db",
+    "database": "/home/la/dev/beta/ohlc/data/xdefault.db",
 }
 
 
-def create_df_from_one_column_in_each_table(ctx: dict, column_name: str) -> pd.DataFrame:
+def create_df_from_one_column_in_each_table(ctx: dict, indicator: str) -> pd.DataFrame:
     """Select data from the named column out of each table in the sqlite database"""
     if DEBUG:
-        logger.debug(f"create_df_from_sqlite_table_data(ctx={ctx})")
+        logger.debug(f"create_df_from_sqlite_table_data(ctx={ctx}, indicator={indicator})")
 
     db_con = sqlite3.connect(database=ctx["database"])
-    db_table_array = pd.read_sql(  # returns numpy ndarray of table names
+
+    # get a numpy ndarray of table names
+    db_table_array = pd.read_sql(
         f"SELECT name FROM sqlite_schema WHERE type='table' AND name NOT like 'sqlite%'", db_con,
     ).name.values
 
-    index_array = pd.read_sql(  # returns numpy ndarray of Date index
+    index_array = pd.read_sql(  # get a numpy ndarray of Date index
         f"SELECT date FROM {db_table_array[0]}", db_con
     ).date.values
 
@@ -34,24 +36,23 @@ def create_df_from_one_column_in_each_table(ctx: dict, column_name: str) -> pd.D
 
     for table in db_table_array:
         df[table] = pd.read_sql(
-            f"SELECT date, {column_name} FROM {table}", db_con, index_col="date"
+            f"SELECT date, {indicator} FROM {table}", db_con, index_col="date"
         )
     df.index = pd.to_datetime(df.index, unit="s").date
-    df.index.names = ['Date']
+    df.index.names = ['date']
 
     return df
 
 
-def create_df_from_sqlite_table_data(ctx: dict, table: str) -> pd.DataFrame:
+def create_df_from_sqlite_table_data(ctx: dict) -> pd.DataFrame:
     """"""
     if DEBUG:
-        logger.debug(
-            f"create_df_from_sqlite(database={ctx['database']}, table={table})"
-        )
+        logger.debug(f"create_df_from_sqlite(database={ctx['database']}, table={ctx['table']})")
 
     db_con = sqlite3.connect(database=ctx["database"])
-    df = pd.read_sql(f"SELECT * FROM {table}", db_con, index_col="Date")
-    df.index = pd.to_datetime(df.index, unit="s")
+    df = pd.read_sql(f"SELECT date, ticker, {ctx['indicator']} FROM {ctx['table']}", db_con, index_col="date")
+    df.index = pd.to_datetime(df.index, unit="s").date
+    df.index.names = ['date']
 
     return df
 
