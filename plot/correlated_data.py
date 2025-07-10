@@ -23,12 +23,12 @@ logger = logging.getLogger(__name__)
 ctx = {
     "database": None,
     "table": "data_line",
-    # "stonk_indicator": "cwap",
-    "stonk_indicator": "mass",
+    "stonk_indicator": "cwap",
+    # "stonk_indicator": "mass",
     "target_indicator": "cwap",
     "scaler": "MinMax",
     # "scaler": "Robust",
-    "shift_period": 3
+    "shift_period": 5
 }
 
 def main(ctx: dict) -> None:
@@ -46,7 +46,7 @@ def main(ctx: dict) -> None:
     stonk_df = utils_pd.create_df_from_one_column_in_each_table(ctx=ctx, indicator=ctx["stonk_indicator"])
     if DEBUG: logger.debug(f"stonk_df\n{stonk_df}\ncolumns: {stonk_df.columns}")
 
-    df_mask = ~(stonk_df.columns.isin(["EURL", "GDXU", "TNA", "YINN"]))
+    df_mask = ~(stonk_df.columns.isin(["EURL", "GDXU", "SPXL", "TNA", "YINN"]))
     shift_cols = stonk_df.columns[df_mask]
     stonk_df[shift_cols] = stonk_df[shift_cols].shift(periods=ctx["shift_period"])
 
@@ -59,20 +59,22 @@ def main(ctx: dict) -> None:
 
     plt_mask = np.triu(np.ones_like(corr, dtype=bool))
 
-    plt.figure(figsize=(12, 9))
+    plt.figure(figsize=(11, 8.5))
+    # plt.figure(figsize=(16, 9))
+
     sns.color_palette('pastel')
     sns.set_context('paper')
     sns.heatmap(
         data=corr, mask=plt_mask, annot=True,
         vmin=-100, vmax=100, center=0,
         square=True, linewidths=.5,
-        cbar_kws={"shrink": .5}
+        cbar_kws={"shrink": .2}
     ).set_title(
-        f"{ctx['stonk_indicator']}/{ctx['target_indicator']} - {ctx['scaler']}Scaler"
+        f"{ctx['stonk_indicator']}/{ctx['target_indicator']} {ctx['shift_period']} period - {ctx['scaler']}Scaler"
     )
 
     # plt.show()
-    plt.savefig(f"../img/hm/{ctx['stonk_indicator']}_{ctx['target_indicator']}_{ctx['scaler'].lower()}")
+    plt.savefig(f"../img/hm/{ctx['stonk_indicator']}_{ctx['target_indicator']}_{ctx['scaler'].lower()}_{ctx['shift_period']}")
     plt.close()
 
 
