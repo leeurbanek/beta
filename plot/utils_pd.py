@@ -38,6 +38,7 @@ def create_df_from_one_column_in_each_table(ctx: dict, indicator: str) -> pd.Dat
         df[table] = pd.read_sql(
             f"SELECT date, {indicator} FROM {table}", db_con, index_col="date"
         )
+    # df.index = pd.to_datetime(df.index, unit="s")
     df.index = pd.to_datetime(df.index, unit="s").date
     df.index.names = ['date']
 

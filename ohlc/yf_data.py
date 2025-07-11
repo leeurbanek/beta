@@ -188,22 +188,23 @@ if __name__ == "__main__":
         },
         'interface': {
             'command': 'data',
-            'target_data': ['LQD'],
-            'arguments': ['EEM', 'IWM'],
-            # 'arguments': ['AFK', 'ASEA', 'BOTZ', 'DBC', 'ECNS', 'EEM', 'EURL', 'EZU', 'FXI', 'GDXU', 'HYG', 'ICLN', 'ILF', 'IWM', 'IYR', 'IYZ', 'JETS', 'LIT', 'LQD', 'SGOL', 'SIVR', 'SPXL', 'SPY', 'TAN', 'TIP', 'TNA', 'VEGI', 'XAR', 'XLB', 'XLE', 'XLF', 'XLI', 'XLK', 'XLP', 'XLU', 'XLV', 'XLY', 'YINN'],
+            'target_data': ['SPXL', 'YINN'],
+            'arguments': ['ECNS', 'FXI', 'HYG', 'XLF', 'XLY'],
             'database': 'default.db',
-            'data_line': ['CLOP', 'CLV', 'CWAP', 'HILO', 'MASS', 'VOLUME']
+            'data_line': ['CWAP','MASS']
+            # 'data_line': ['CLOP', 'CLV', 'CWAP', 'HILO', 'MASS', 'VOLUME']
         },
         'data_service': {
             'data_frequency': 'daily',
-            'data_line': 'CLOP CLV CWAP HILO MASS VOLUME',
-            'data_list': 'EEM IWM',
+            'data_line': 'CWAP MASS',
+            # 'data_line': 'CLOP CLV CWAP HILO MASS VOLUME',
+            'data_list': 'ECNS FXI HYG XLF XLY',
             'data_lookback': '42',
             # 'data_lookback': '1825',
             'data_provider': 'yfinance',
             'sklearn_scaler': 'MinMaxScaler',
             # 'sklearn_scaler': 'RobustScaler',
-            'target_data': 'LQD',
+            'target_data': 'SPXL YINN',
             'url_alphavantage': 'https://www.alphavantage.co/query',
             'url_tiingo': '',
             'url_yfinance': ''

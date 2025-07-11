@@ -26,9 +26,9 @@ ctx = {
     "stonk_indicator": "cwap",
     # "stonk_indicator": "mass",
     "target_indicator": "cwap",
-    "scaler": "MinMax",
-    # "scaler": "Robust",
-    "shift_period": 5
+    # "scaler": "MinMax",
+    "scaler": "Robust",
+    "shift_period": 3
 }
 
 def main(ctx: dict) -> None:
@@ -44,14 +44,14 @@ def main(ctx: dict) -> None:
     ctx["database"] = DB
 
     stonk_df = utils_pd.create_df_from_one_column_in_each_table(ctx=ctx, indicator=ctx["stonk_indicator"])
-    if DEBUG: logger.debug(f"stonk_df\n{stonk_df}\ncolumns: {stonk_df.columns}")
+    if DEBUG: logger.debug(f"stonk_df\n{type(stonk_df)}\ncolumns: {stonk_df.columns}")
 
+    # df_mask = (stonk_df.columns.isin(["EURL", "GDXU", "SPXL", "TNA", "YINN"]))
     df_mask = ~(stonk_df.columns.isin(["EURL", "GDXU", "SPXL", "TNA", "YINN"]))
     shift_cols = stonk_df.columns[df_mask]
-    stonk_df[shift_cols] = stonk_df[shift_cols].shift(periods=ctx["shift_period"])
+    stonk_df[shift_cols] = stonk_df[shift_cols].shift(periods=ctx["shift_period"], freq=None)
 
     if DEBUG: logger.debug(f"shifted_df\n{stonk_df}\ncolumns: {stonk_df.columns}")
-
 
     corr = stonk_df.corr(method='kendall')
     corr = (corr * 100).round().astype(int)

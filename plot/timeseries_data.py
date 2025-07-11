@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 ctx = {
     "database": "",
     "table": "data_line",
-    # "stonk_indicator": "cwap",
-    "stonk_indicator": "mass",
+    "stonk_indicator": "cwap",
+    # "stonk_indicator": "mass",
     "target_indicator": "cwap",
     # "scaler": "MinMax",
     "scaler": "Robust",
@@ -96,17 +96,18 @@ def timeseries(ctx: dict):
     ctx["database"] = DB
 
     stonk_df = utils_pd.create_df_from_one_column_in_each_table(ctx=ctx, indicator=ctx["target_indicator"])
-    stonk_df = stonk_df.shift(periods=ctx["shift_period"])
+    stonk_df = stonk_df.shift(periods=ctx["shift_period"], freq=None)
     if DEBUG: logger.debug(f"stonk_df\n{stonk_df}\ncolumns: {stonk_df.columns}")
 
     target_df = utils_pd.create_df_from_one_column_in_each_table(ctx=ctx, indicator=ctx["target_indicator"])
-    target_df = target_df[["EURL", "GDXU", "TNA", "YINN"]]
+    target_df = target_df[["SPXL", "YINN"]]
+    # target_df = target_df.shift(periods=ctx["shift_period"], freq=None)
     if DEBUG: logger.debug(f"target_df:\n{target_df} {type(target_df)}")
 
     for i, col in enumerate(stonk_df.columns):
         if DEBUG: logger.debug(f"i: {i}, col: {stonk_df[col].name} {type(stonk_df[col])}")
 
-        if stonk_df[col].name in ["EURL", "GDXU", "TNA", "YINN"]:
+        if stonk_df[col].name in ["SPXL", "YINN"]:
             continue
         print(f"column name: {stonk_df[col].name} {type(stonk_df[col].name)}")
 
@@ -121,14 +122,15 @@ def timeseries(ctx: dict):
         sns.set_context(context='paper')
         sns.lineplot(
             data=plot_df,
-            palette=['black', 'magenta', 'gold', 'deepskyblue', 'red'],
+            palette=['black', 'deepskyblue', 'red'],
+            # palette=['black', 'magenta', 'gold', 'deepskyblue', 'green', 'red'],
             # sizes=[1,1,1,1,10],
         ).set_title(
-            f"{stonk_df[col].name} ({ctx['stonk_indicator']}) vs. EURL, GDXU, TNA, YINN ({ctx['target_indicator']}) - {ctx['scaler']}Scaler"
+            f"{stonk_df[col].name} ({ctx['stonk_indicator']} {ctx['shift_period']}) vs. SPXL, YINN ({ctx['target_indicator']}) - {ctx['scaler']}Scaler"
         )
 
         # plt.show()
-        plt.savefig(f"../img/ts/{stonk_df[col].name}_{ctx['stonk_indicator']}_{ctx['scaler'].lower()}")
+        plt.savefig(f"../img/ts/{stonk_df[col].name}_{ctx['stonk_indicator']}_{ctx['shift_period']}_{ctx['scaler'].lower()}")
         mpl.pyplot.close()
 
 
