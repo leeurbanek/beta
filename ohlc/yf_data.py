@@ -114,18 +114,18 @@ class YahooFinanceDataProcessor(BaseProcessor):
         # insert ticker symbol column
         df.insert(loc=0, column="ticker", value=ticker, allow_duplicates=True)
 
-        # difference between the close and open price
-        clop = list(round((yf_df["Close"] - yf_df["Open"]) * 100).astype(int))
-        if DEBUG: logger.debug(f"clop: {clop} {type(clop)}")
+        # # difference between the close and open price
+        # clop = list(round((yf_df["Close"] - yf_df["Open"]) * 100).astype(int))
+        # if DEBUG: logger.debug(f"clop: {clop} {type(clop)}")
 
-        # close location value, relative to the high-low range
-        try:
-            clv = list(
-                round((2 * yf_df["Close"] - yf_df["Low"] - yf_df["High"]) / (yf_df["High"] - yf_df["Low"]) * 100)
-            )
-            if DEBUG: logger.debug(f"clv: {clv} {type(clv)}")
-        except ZeroDivisionError as e:
-            logger.debug(f"*** ERROR *** {e}")
+        # # close location value, relative to the high-low range
+        # try:
+        #     clv = list(
+        #         round((2 * yf_df["Close"] - yf_df["Low"] - yf_df["High"]) / (yf_df["High"] - yf_df["Low"]) * 100)
+        #     )
+        #     if DEBUG: logger.debug(f"clv: {clv} {type(clv)}")
+        # except ZeroDivisionError as e:
+        #     logger.debug(f"*** ERROR *** {e}")
 
         # close weighted average price exclude open price
         cwap = np.array(
@@ -134,9 +134,9 @@ class YahooFinanceDataProcessor(BaseProcessor):
         cwap = np.rint((self.scaler.fit_transform(cwap).flatten() + 10) * 100).astype(int)
         if DEBUG: logger.debug(f"scaled_cwap: {cwap} {type(cwap)}")
 
-        # difference between the high and low price
-        hilo = list(round((yf_df["High"] - yf_df["Low"]) * 100).astype(int))
-        if DEBUG: logger.debug(f"hilo: {hilo} {type(hilo)}")
+        # # difference between the high and low price
+        # hilo = list(round((yf_df["High"] - yf_df["Low"]) * 100).astype(int))
+        # if DEBUG: logger.debug(f"hilo: {hilo} {type(hilo)}")
 
         # number of shares traded
         volume = np.array(list(yf_df["Volume"])).reshape(-1, 1)
@@ -160,7 +160,8 @@ def main(ctx: dict) -> None:
         logger.debug(f"main(ctx={ctx})")
 
     # create database
-    utils.create_sqlite_indicator_database(ctx=ctx)
+    # utils.create_sqlite_indicator_database(ctx=ctx)
+    utils.create_sqlite_data_line_database(ctx=ctx)
 
     # select data processor
     processor = YahooFinanceDataProcessor(ctx=ctx)
@@ -169,9 +170,10 @@ def main(ctx: dict) -> None:
     for index, ticker in enumerate(ctx['interface']['arguments']):
         ctx['interface']['index'] = index  # for alphavantage, may throttle at five downloads
         data_tuple = processor.download_and_parse_price_data(ticker=ticker)
-        if DEBUG: logger.debug(f"data_tuple {data_tuple[0]}\n{data_tuple[1]}")
+        if DEBUG: logger.debug(f"data_tuple {data_tuple[0]}:\n{data_tuple[1]}")
 
-        utils.write_indicator_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
+        # utils.write_indicator_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
+        utils.write_data_line_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
 
 
 if __name__ == "__main__":
@@ -200,10 +202,10 @@ if __name__ == "__main__":
             # 'data_line': 'CLOP CLV CWAP HILO MASS VOLUME',
             'data_list': 'ECNS FXI HYG XLF XLY',
             'data_lookback': '42',
-            # 'data_lookback': '1825',
+            # 'data_lookback': '2555',
             'data_provider': 'yfinance',
-            'sklearn_scaler': 'MinMaxScaler',
-            # 'sklearn_scaler': 'RobustScaler',
+            # 'sklearn_scaler': 'MinMaxScaler',
+            'sklearn_scaler': 'RobustScaler',
             'target_data': 'SPXL YINN',
             'url_alphavantage': 'https://www.alphavantage.co/query',
             'url_tiingo': '',
