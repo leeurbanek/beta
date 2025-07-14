@@ -18,14 +18,14 @@ logging.config.fileConfig(fname="../logger.ini")
 logger = logging.getLogger(__name__)
 
 ctx = {
-    "database": "",
+    "database": "/home/la/dev/stomartat/temp/data/xdefault.db",
     "table": "data_line",
     "stonk_indicator": "cwap",
     # "stonk_indicator": "mass",
     "target_indicator": "cwap",
     # "scaler": "MinMax",
     "scaler": "Robust",
-    "shift_period": 3
+    "shift_period": 5
 }
 
 def small_timeseries(ctx: dict):
@@ -87,13 +87,13 @@ def small_timeseries(ctx: dict):
 
 def timeseries(ctx: dict):
     """"""
-    if ctx["scaler"].lower() == "minmax".lower():
-        DB = "/home/la/dev/stomartat/temp/data/xminmax.db"
-    elif ctx["scaler"].lower() == "robust".lower():
-        DB = "/home/la/dev/stomartat/temp/data/xrobust.db"
-    if DEBUG: logger.debug(f"database: {DB}")
+    # if ctx["scaler"].lower() == "minmax".lower():
+    #     DB = "/home/la/dev/stomartat/temp/data/xminmax.db"
+    # elif ctx["scaler"].lower() == "robust".lower():
+    #     DB = "/home/la/dev/stomartat/temp/data/xrobust.db"
+    # if DEBUG: logger.debug(f"database: {DB}")
 
-    ctx["database"] = DB
+    # ctx["database"] = DB
 
     stonk_df = utils_pd.create_df_from_one_column_in_each_table(ctx=ctx, indicator=ctx["target_indicator"])
     stonk_df = stonk_df.shift(periods=ctx["shift_period"], freq=None)
@@ -130,7 +130,7 @@ def timeseries(ctx: dict):
         )
 
         # plt.show()
-        plt.savefig(f"../img/ts/{stonk_df[col].name}_{ctx['stonk_indicator']}_{ctx['shift_period']}_{ctx['scaler'].lower()}")
+        plt.savefig(f"../img/timeseries/{stonk_df[col].name}_{ctx['stonk_indicator']}_{ctx['shift_period']}_{ctx['scaler'].lower()}")
         mpl.pyplot.close()
 
 
