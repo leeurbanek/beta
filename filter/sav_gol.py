@@ -3,6 +3,7 @@ import logging, logging.config
 import sqlite3
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from scipy.signal import savgol_filter
@@ -15,7 +16,8 @@ logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 ctx = {
-    "database": "/home/la/dev/stomartat/temp/data/xdefault.db",
+    "database": "/home/la/dev/beta/ohlc/data/default.db",
+    # "database": "/home/la/dev/stomartat/temp/data/xdefault.db",
     "dataframe": None,
     "table": "data_line",
     "indicator": "cwap",
@@ -65,7 +67,7 @@ def create_filtered_dataframe(ctx: dict)->None:
 
     # insert values for each ticker into df
     for col in ctx["dataframe"].columns:
-        if col in ['SPXL', 'YINN']:
+        if col in ['ECNS', 'FXI', 'SPXL', 'YINN']:
             continue
         df[col] = savgol_filter(
             x=ctx["dataframe"][col].values,
@@ -114,15 +116,37 @@ def plot_alternate_filter_params(ctx: dict)->None:
         plt.close()
 
 
-def zero_crossing_matrix(ctx: dict):
-    if DEBUG: logger.debug(f"zero_crossing_matrix(ctx={ctx}")
+def zero_crossing_dataframe(ctx: dict):
+    if DEBUG: logger.debug(f"zero_crossing_dataframe(ctx={type(ctx)}")
 
-    for i, col in enumerate(ctx["dataframe"].columns):
-        if DEBUG: logger.debug(f"i: {i},  col: {col},  values:\n{ctx['dataframe'].values}")
+    slope_df = ctx["dataframe"]
+    # create empty dataframe with index as a timestamp
+    signal_df = pd.DataFrame(index=slope_df.index.values)
+    signal_df.index.name = "date"
 
-# for i in xrange(len(Derivative)-1):
-#     if Derivative[i] > 0 and Derivative[i+1] < 0:
-#         print "crossing between indexes {} and {}".format(i, i+1)
+    for col in slope_df.columns:
+        data = slope_df[col].values
+        zero_list = list()
+
+        for i, cur_item in enumerate(data):
+            prev_item = data[i - 1]
+            if i == 0:
+                # reset starting value
+                zero_list.append(0)
+                continue
+            elif cur_item > 0 and prev_item < 0:
+                # derivative crosses zero to upside
+                zero_list.append(1)
+            elif cur_item < 0 and prev_item > 0:
+                # derivative crosses zero to downside
+                zero_list.append(-1)
+            else:
+                # no crossing maintain status
+                zero_list.append(zero_list[i - 1])
+
+        signal_df[f"{col}x"] = zero_list
+    signal_df.to_pickle("signal_df.pkl")
+    if DEBUG: logger.debug(f"signal_df:\n{signal_df}")
 
 
 def main(ctx: dict) -> None:
@@ -132,7 +156,7 @@ def main(ctx: dict) -> None:
     ctx["dataframe"] = df
     # plot_alternate_filter_params(ctx=ctx)
     ctx["dataframe"] = create_filtered_dataframe(ctx=ctx)
-    zero_crossing_matrix(ctx=ctx)
+    zero_crossing_dataframe(ctx=ctx)
 
 
 if __name__ == "__main__":

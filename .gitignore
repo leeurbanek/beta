@@ -175,6 +175,7 @@ x*.*
 debug.*
 *.db
 img
+*.pkl
 
 #.adblock_link
 #*.sqlite3
