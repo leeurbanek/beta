@@ -181,5 +181,5 @@ img
 #*.sqlite3
 #migrations/
 #app/beta.py
-#data/
+data
 #*.json

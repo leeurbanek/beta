@@ -16,7 +16,7 @@ logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 ctx = {
-    "database": "/home/la/dev/beta/ohlc/data/default.db",
+    "database": "/home/la/dev/beta/data/default.db",
     # "database": "/home/la/dev/stomartat/temp/data/xdefault.db",
     "dataframe": None,
     "table": "data_line",
@@ -56,10 +56,10 @@ def create_df_from_one_column_in_each_table(ctx: dict, indicator: str) -> pd.Dat
     return df
 
 
-def create_filtered_dataframe(ctx: dict)->None:
+def create_sav_gol_deriv_dataframe(ctx: dict, deriv:int)->None:
     """"""
     if DEBUG:
-        logger.debug(f"create_filtered_dataframe(ctx={type(ctx)})")
+        logger.debug(f"create_sav_gol_derivati_dataframe(ctx={type(ctx)})")
 
     # create empty dataframe with index as a timestamp
     df = pd.DataFrame(index=ctx["dataframe"].index.values)
@@ -67,14 +67,34 @@ def create_filtered_dataframe(ctx: dict)->None:
 
     # insert values for each ticker into df
     for col in ctx["dataframe"].columns:
-        if col in ['ECNS', 'FXI', 'SPXL', 'YINN']:
+        if col in ['ECNS', 'FXI', 'SPXL', 'SPXS', 'YINN']:
             continue
         df[col] = savgol_filter(
             x=ctx["dataframe"][col].values,
             window_length=ctx["window_length_list"][0],
             polyorder=ctx["poly_order_list"][0],
-            deriv=1
+            deriv=deriv
         )
+    return df
+
+
+def create_stonk_dataframe(ctx: dict)->None:
+    """"""
+    if DEBUG:
+        logger.debug(f"create_stonk_dataframe(ctx={type(ctx)})")
+
+    # create empty dataframe with index as a timestamp
+    df = pd.DataFrame(index=ctx["dataframe"].index.values)
+    df.index.name = "date"
+
+    # insert values for each ticker into df
+    for col in ctx["dataframe"].columns:
+        if col not in ['SPXL', 'SPXS',]:
+            continue
+        df[col] = ctx["dataframe"][col].values
+
+    if DEBUG: logger.debug(f"stonk_df:\n{df} {type(df)}")
+    df.to_pickle("../data/stonk_df.pkl")
     return df
 
 
@@ -119,7 +139,8 @@ def plot_alternate_filter_params(ctx: dict)->None:
 def zero_crossing_dataframe(ctx: dict):
     if DEBUG: logger.debug(f"zero_crossing_dataframe(ctx={type(ctx)}")
 
-    slope_df = ctx["dataframe"]
+    slope_df = create_sav_gol_deriv_dataframe(ctx=ctx, deriv=1)
+
     # create empty dataframe with index as a timestamp
     signal_df = pd.DataFrame(index=slope_df.index.values)
     signal_df.index.name = "date"
@@ -145,8 +166,12 @@ def zero_crossing_dataframe(ctx: dict):
                 zero_list.append(zero_list[i - 1])
 
         signal_df[f"{col}x"] = zero_list
-    signal_df.to_pickle("signal_df.pkl")
+
+    signal_df["sum"] = signal_df.sum(axis=1, numeric_only=True)
+
     if DEBUG: logger.debug(f"signal_df:\n{signal_df}")
+    signal_df.to_pickle("../data/signal_df.pkl")
+    return signal_df
 
 
 def main(ctx: dict) -> None:
@@ -155,7 +180,8 @@ def main(ctx: dict) -> None:
     df = create_df_from_one_column_in_each_table(ctx=ctx, indicator="cwap")
     ctx["dataframe"] = df
     # plot_alternate_filter_params(ctx=ctx)
-    ctx["dataframe"] = create_filtered_dataframe(ctx=ctx)
+    # create_sav_gol_deriv_dataframe(ctx=ctx, deriv=1)
+    # create_stonk_dataframe(ctx=ctx)
     zero_crossing_dataframe(ctx=ctx)
 
 

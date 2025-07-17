@@ -190,8 +190,8 @@ if __name__ == "__main__":
         },
         'interface': {
             'command': 'data',
-            'target_data': ['SPXL', 'YINN'],
-            'arguments': ['ECNS', 'FXI', 'HYG', 'XLF', 'XLY'],
+            'target_data': ['SPXL', 'SPXS', 'YINN'],
+            'arguments': ['ECNS', 'FXI', 'HYG', 'SPXL', 'SPXS', 'XLF', 'XLY', 'YINN'],
             'database': 'default.db',
             # 'data_line': ['CWAP','MASS']
             'data_line': ['CLOP', 'CLV', 'CWAP', 'HILO', 'MASS', 'VOLUME']
@@ -200,13 +200,13 @@ if __name__ == "__main__":
             'data_frequency': 'daily',
             # 'data_line': 'CWAP MASS',
             'data_line': 'CLOP CLV CWAP HILO MASS VOLUME',
-            'data_list': 'ECNS FXI HYG XLF XLY',
+            'data_list': 'ECNS FXI HYG SPXL SPXS XLF XLY YINN',
             'data_lookback': '42',
             # 'data_lookback': '2555',
             'data_provider': 'yfinance',
             # 'sklearn_scaler': 'MinMaxScaler',
             'sklearn_scaler': 'RobustScaler',
-            'target_data': 'SPXL YINN',
+            'target_data': 'SPXL SPXS YINN',
             'url_alphavantage': 'https://www.alphavantage.co/query',
             'url_tiingo': '',
             'url_yfinance': ''

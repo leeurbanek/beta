@@ -7,17 +7,14 @@ DEBUG = True
 logging.config.fileConfig(fname='../logger.ini')
 logger = logging.getLogger(__name__)
 
-ctx = {
-}
+ctx = {}
 
 
 def main(ctx: dict) -> None:
-    if DEBUG:
-        logger.debug(f"main(ctx={ctx})")
+    if DEBUG: logger.debug(f"main(ctx={ctx})")
 
 
 if __name__ == "__main__":
-    if DEBUG:
-        logger.debug(f"******* START - backtest/beta.py.main() *******")
+    if DEBUG: logger.debug(f"******* START - backtest/beta.py.main() *******")
 
     main(ctx=ctx)
