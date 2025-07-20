@@ -93,25 +93,20 @@ def create_sqlite_stonk_database(ctx: dict) -> None:
 
     download_set = ctx['interface']['download_list']
     target_list = ctx['interface']['target']
-    print(f"download_set: {download_set} {type(download_set)}")
-    print(f"target_list: {target_list} {type(target_list)}")
 
     with sqlite3.connect(DB) as con:
         # create table for each ticker symbol
-        # for table in ctx["interface"]["arguments"]:
-
-        for table in iter(download_set):
-            print(f"table: {table} {type(table)}", end=' ')
-            if table in target_list:
-                print(f"target: {table}")
+        for ticker in iter(download_set):
+            if ticker in target_list:
                 # create table for target symbol (ohlc prices)
                 con.execute(f'''
-                    CREATE TABLE {table} (
+                    CREATE TABLE {ticker} (
                         date      INTEGER    NOT NULL,
-                        open      INTEGER,
-                        high      INTEGER,
-                        low       INTEGER,
-                        close     INTEGER,
+                        Open      INTEGER,
+                        High      INTEGER,
+                        Low       INTEGER,
+                        Close     INTEGER,
+                        Volume    INTEGER,
                         PRIMARY KEY (date)
                     )'''
                 )
@@ -119,14 +114,13 @@ def create_sqlite_stonk_database(ctx: dict) -> None:
                 for col in ctx["interface"]["data_line"]:
                     con.execute(
                         f"""
-                        ALTER TABLE {table} ADD COLUMN {col.lower()} INTEGER
+                        ALTER TABLE {ticker} ADD COLUMN {col.lower()} INTEGER
                     """
                     )
             else:
-                print(f"indicator: {table}")
                 con.execute(
                     f"""
-                    CREATE TABLE {table.upper()} (
+                    CREATE TABLE {ticker.upper()} (
                         date    INTEGER    NOT NULL,
                         PRIMARY KEY (date)
                     )"""
@@ -135,7 +129,7 @@ def create_sqlite_stonk_database(ctx: dict) -> None:
                 for col in ctx["interface"]["data_line"]:
                     con.execute(
                         f"""
-                        ALTER TABLE {table} ADD COLUMN {col.lower()} INTEGER
+                        ALTER TABLE {ticker} ADD COLUMN {col.lower()} INTEGER
                     """
                     )
 
@@ -174,6 +168,22 @@ def write_indicator_data_to_sqlite_db(ctx: dict, data_tuple: tuple)->None:
     """"""
     if DEBUG: logger.debug(f"write_indicator_data_to_sqlite_db(ctx={ctx}, data_tuple={data_tuple})")
     print(f"write_indicator_data_to_sqlite_db(ctx={ctx}, data_tuple={data_tuple})")
+
+    DB = f"{ctx['default']['work_dir']}/data/{ctx['interface']['database']}"
+    print(f" database: {DB}")
+    try:
+        with sqlite3.connect(DB) as con:
+            for row in data_tuple[1].itertuples(index=True, name=None):
+                # con.execute(f"INSERT INTO {data_tuple[0]} VALUES (?,?,?,?,?,?,?)", row)
+                con.execute(f"INSERT INTO {data_tuple[0]} VALUES (?,?)", row)
+    except con.DatabaseError as e:
+        logger.debug(f"*** Error *** {e}")
+
+
+def write_target_data_to_sqlite_db(ctx: dict, data_tuple: tuple)->None:
+    """"""
+    if DEBUG: logger.debug(f"write_target_data_to_sqlite_db(ctx={ctx}, data_tuple={data_tuple})")
+    print(f"write_target_data_to_sqlite_db(ctx={ctx}, data_tuple={data_tuple})")
 
     DB = f"{ctx['default']['work_dir']}/data/{ctx['interface']['database']}"
     print(f" database: {DB}")

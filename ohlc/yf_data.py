@@ -130,18 +130,18 @@ class YahooFinanceDataProcessor(BaseProcessor):
         volume = list(yf_df["Volume"])
         if DEBUG: logger.debug(f"volume:\n{volume} {type(volume)}")
 
-        # difference between the close and open price
-        clop = list(round((yf_df["Close"] - yf_df["Open"]) * 100).astype(int))
-        if DEBUG: logger.debug(f"clop:\n{clop} {type(clop)}")
+        # # difference between the close and open price
+        # clop = list(round((yf_df["Close"] - yf_df["Open"]) * 100).astype(int))
+        # if DEBUG: logger.debug(f"clop:\n{clop} {type(clop)}")
 
-        # close location value, relative to the high-low range
-        try:
-            clv = list(
-                round((2 * yf_df["Close"] - yf_df["Low"] - yf_df["High"]) / (yf_df["High"] - yf_df["Low"]) * 100)
-            )
-            if DEBUG: logger.debug(f"clv:\n{clv} {type(clv)}")
-        except ZeroDivisionError as e:
-            logger.debug(f"*** ERROR *** {e}")
+        # # close location value, relative to the high-low range
+        # try:
+        #     clv = list(
+        #         round((2 * yf_df["Close"] - yf_df["Low"] - yf_df["High"]) / (yf_df["High"] - yf_df["Low"]) * 100).astype(int)
+        #     )
+        #     if DEBUG: logger.debug(f"clv:\n{clv} {type(clv)}")
+        # except ZeroDivisionError as e:
+        #     logger.debug(f"*** ERROR *** {e}")
 
         # close weighted average price exclude open price
         cwap = np.array(
@@ -150,49 +150,50 @@ class YahooFinanceDataProcessor(BaseProcessor):
         cwap = np.rint((self.scaler.fit_transform(cwap).flatten() + 10) * 100).astype(int)
         if DEBUG: logger.debug(f"scaled_cwap:\n{cwap} {type(cwap)}")
 
-        # difference between the high and low price
-        hilo = list(round((yf_df["High"] - yf_df["Low"]) * 100).astype(int))
-        if DEBUG: logger.debug(f"hilo:\n{hilo} {type(hilo)}")
+        # # difference between the high and low price
+        # hilo = list(round((yf_df["High"] - yf_df["Low"]) * 100).astype(int))
+        # if DEBUG: logger.debug(f"hilo:\n{hilo} {type(hilo)}")
 
-        # price times number of shares traded
-        vol = np.array(list(yf_df["Volume"])).reshape(-1, 1)
-        vol = np.rint((self.scaler.fit_transform(vol).flatten() + 10) * 100).astype(int)
-        if DEBUG: logger.debug(f"scaled_vol:\n{vol} {type(vol)}")
-        mass = np.array(cwap * vol).reshape(-1, 1)
-        mass = np.rint((self.scaler.fit_transform(mass).flatten() + 10) * 100).astype(int)
-        if DEBUG: logger.debug(f"scaled_mass:\n{mass} {type(mass)}")
+        # # price times number of shares traded
+        # vol = np.rint(
+        #     (self.scaler.fit_transform(np.array(list(yf_df["Volume"])).reshape(-1, 1)).flatten() + 10) * 100
+        # ).astype(int)
+        # if DEBUG: logger.debug(f"scaled volume:\n{vol} {type(vol)}")
+        # mass = np.array(cwap * vol)
+        # if DEBUG: logger.debug(f"scaled mass:\n{mass} {type(mass)}")
 
         # insert values for each ohlc and data_line into df
-        for i, item in enumerate(self.ohlc + self.data_line):
-            df.insert(loc=i, column=f"{item.lower()}", value=eval(item.lower()), allow_duplicates=True)
-
+        if ticker in ctx["interface"]["target"]:
+            for i, item in enumerate(self.ohlc + self.data_line):
+                df.insert(loc=i, column=f"{item.lower()}", value=eval(item.lower()), allow_duplicates=True)
+        else:
+            for i, item in enumerate(self.data_line):
+                df.insert(loc=i, column=f"{item.lower()}", value=eval(item.lower()), allow_duplicates=True)
 
         return ticker, df
 
 
 def main(ctx: dict) -> None:
-    if DEBUG:
-        logger.debug(f"main(ctx={ctx})")
+    if DEBUG: logger.debug(f"main(ctx={ctx})")
 
     ctx['interface']['download_list'] = set(ctx['interface']['arguments'] + ctx['interface']['target'])
 
     # create database
-    # utils.create_sqlite_stonk_database(ctx=ctx)
-    # utils.create_sqlite_indicator_database(ctx=ctx)
-    # utils.create_sqlite_data_line_database(ctx=ctx)
+    utils.create_sqlite_stonk_database(ctx=ctx)
 
     # select data processor
     processor = YahooFinanceDataProcessor(ctx=ctx)
 
     # get and save data for each stonk
     for index, ticker in enumerate(ctx['interface']['download_list']):
-    # for index, ticker in enumerate(ctx['interface']['arguments']):
         ctx['interface']['index'] = index  # for alphavantage, may throttle at five downloads
         data_tuple = processor.download_and_parse_data(ticker=ticker)
         if DEBUG: logger.debug(f"data_tuple {data_tuple[0]}:\n{data_tuple[1]}")
 
-    #     utils.write_indicator_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
-    #     # utils.write_data_line_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
+        if ticker in ctx["interface"]["target"]:
+            utils.write_target_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
+        else:
+            utils.write_indicator_data_to_sqlite_db(ctx=ctx, data_tuple=data_tuple)
 
 
 if __name__ == "__main__":
@@ -207,21 +208,21 @@ if __name__ == "__main__":
         'interface': {
             'command': 'data',
             'download_list': None,
-            'target': ['SPXL',],
-            # 'target': ['SPXL', 'SPXS', 'YINN', 'YANG'],
-            'arguments': ['HYG',],
-            # 'arguments': ['ECNS', 'FXI', 'HYG', 'XLF', 'XLY'],
+            # 'target': ['SPXL',],
+            'target': ['SPXL', 'SPXS', 'YINN', 'YANG'],
+            # 'arguments': ['HYG',],
+            'arguments': ['ECNS', 'FXI', 'HYG', 'XLF', 'XLY'],
             'database': 'default.db',
-            # 'data_line': ['CWAP','MASS']
-            'data_line': ['CLOP', 'CLV', 'CWAP', 'HILO', 'MASS']
+            'data_line': ['CWAP',]
+            # 'data_line': ['CLOP', 'CLV', 'CWAP', 'HILO']
         },
         'data_service': {
             'data_frequency': 'daily',
-            # 'data_line': 'CWAP MASS',
-            'data_line': 'CLOP CLV CWAP HILO MASS',
+            'data_line': 'CWAP',
+            # 'data_line': 'CLOP CLV CWAP HILO',
             'data_list': 'ECNS FXI HYG XLF XLY',
-            'data_lookback': '21',
-            # 'data_lookback': '2555',
+            # 'data_lookback': '21',
+            'data_lookback': '2555',
             'data_provider': 'yfinance',
             'ohlc': ['open_', 'high', 'low', 'close', 'volume'],
             # 'sklearn_scaler': 'MinMaxScaler',
