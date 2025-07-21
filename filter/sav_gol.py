@@ -19,11 +19,15 @@ ctx = {
     "database": "/home/la/dev/beta/data/default.db",
     # "database": "/home/la/dev/stomartat/temp/data/xdefault.db",
     "dataframe": None,
-    "table": "data_line",
+    # "table": "data_line",
     "indicator": "cwap",
     "window_length_list": [21, 63],
     "poly_order_list": [2,],
     "slope_param": [21, 63],
+    "target": ["SPXL", "SPXS", "YINN", "YANG"],
+    "china": ["ECNS", "FXI"],
+    "usa": ["HYG", "XLF", "XLY"]
+
 }
 
 
@@ -46,17 +50,18 @@ def create_df_from_one_column_in_each_table(ctx: dict, indicator: str) -> pd.Dat
     df = pd.DataFrame(index=index_array)
 
     for table in db_table_array:
-        df[table] = pd.read_sql(
-            f"SELECT date, {indicator} FROM {table}", db_con, index_col="date"
-        )
-    # df.index = pd.to_datetime(df.index, unit="s")
-    df.index = pd.to_datetime(df.index, unit="s").date
+        if table not in (ctx["target"] + ctx["china"]):
+            df[table] = pd.read_sql(
+                f"SELECT date, {indicator} FROM {table}", db_con, index_col="date"
+            )
+    df.index = pd.to_datetime(df.index, unit="s")
+    # df.index = pd.to_datetime(df.index, unit="s").date
     df.index.names = ['date']
 
     return df
 
 
-def create_sav_gol_deriv_dataframe(ctx: dict, deriv:int)->None:
+def create_sav_gol_deriv_dataframe(ctx: dict, deriv:int)->pd.DataFrame:
     """"""
     if DEBUG:
         logger.debug(f"create_sav_gol_derivati_dataframe(ctx={type(ctx)})")
@@ -67,8 +72,8 @@ def create_sav_gol_deriv_dataframe(ctx: dict, deriv:int)->None:
 
     # insert values for each ticker into df
     for col in ctx["dataframe"].columns:
-        if col in ['ECNS', 'FXI', 'SPXL', 'SPXS', 'YINN']:
-            continue
+        # if col in ['ECNS', 'FXI', 'SPXL', 'SPXS', 'YINN']:
+        #     continue
         df[col] = savgol_filter(
             x=ctx["dataframe"][col].values,
             window_length=ctx["window_length_list"][0],
@@ -80,8 +85,7 @@ def create_sav_gol_deriv_dataframe(ctx: dict, deriv:int)->None:
 
 def create_stonk_dataframe(ctx: dict)->None:
     """"""
-    if DEBUG:
-        logger.debug(f"create_stonk_dataframe(ctx={type(ctx)})")
+    if DEBUG: logger.debug(f"create_stonk_dataframe(ctx={type(ctx)})")
 
     # create empty dataframe with index as a timestamp
     df = pd.DataFrame(index=ctx["dataframe"].index.values)
@@ -167,7 +171,7 @@ def zero_crossing_dataframe(ctx: dict):
 
         signal_df[f"{col}x"] = zero_list
 
-    signal_df["sum"] = signal_df.sum(axis=1, numeric_only=True)
+    signal_df["signal"] = signal_df.sum(axis=1, numeric_only=True)
 
     if DEBUG: logger.debug(f"signal_df:\n{signal_df}")
     signal_df.to_pickle("../data/signal_df.pkl")
@@ -178,6 +182,7 @@ def main(ctx: dict) -> None:
     if DEBUG: logger.debug(f"main(ctx={ctx})")
 
     df = create_df_from_one_column_in_each_table(ctx=ctx, indicator="cwap")
+    if DEBUG: logger.debug(f"dataframe:\n{df} {type(df)}")
     ctx["dataframe"] = df
     # plot_alternate_filter_params(ctx=ctx)
     # create_sav_gol_deriv_dataframe(ctx=ctx, deriv=1)

@@ -77,8 +77,7 @@ def extract_pre_defined_config(ctx: dict):
 
 
 def main(ctx: dict) -> None:
-    if DEBUG:
-        logger.debug(f"main(ctx={ctx})")
+    if DEBUG: logger.debug(f"main(ctx={type(ctx)})")
 
     if ctx["scaler"].lower() == "minmax":
         DB = "/home/la/dev/stomartat/temp/data/xminmax.db"
